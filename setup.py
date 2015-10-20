@@ -21,12 +21,19 @@ setup(name='sparc.apps.cache',
       packages=find_packages(exclude=['ez_setup']),
       namespace_packages=['sparc', 'sparc.apps'],
       include_package_data=True,
+      package_data = {
+          '': ['*.zcml']
+        },
       zip_safe=False,
       install_requires=[
           'setuptools',
+          'argparse',
+          'pyinstaller',
+          'sparc.common',
+          'sparc.db'
           # -*- Extra requirements: -*-
       ],
-      entry_points="""
-      # -*- Entry points: -*-
-      """,
+      entry_points={
+          'console_scripts':['cache=sparc.apps.cache.cache:main'],
+          },
       )
