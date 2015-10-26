@@ -37,10 +37,11 @@ def getScriptArgumentParser(args=sys.argv):
             description='CSV information cache update script.  This will '\
                         'import CSV data into a database.  If the database is '\
                         'already populated, then only new entries and updates '\
-                        'will be imported.',
+                        'will be imported.  Please reference Pypi package '\
+                        'documentation for detailed usage information.',
             epilog="This script will exit with a non-zero status on failure, otherwise zero."+os.linesep+\
                         "Windows invocation: cache.exe C:\\my\\csv\\dir sqlite:///C:\\tmp\\cache.db"+os.linesep+\
-                        "Unix invocation   : cache /path/to/my/csv sqlite:///C:/tmp/cache.db")
+                        "Unix invocation   : cache /path/to/my/csv sqlite:////tmp/cache.db")
     # configuration
     parser.add_argument('--package',
             action='append',
@@ -48,6 +49,13 @@ def getScriptArgumentParser(args=sys.argv):
                  "a valid configure.zcml file within the package that configures "\
                  "the required caching factories and mapping subscribers.  This"\
                  "option can be issued multiple times.")
+    # configuration
+    parser.add_argument('--module',
+            action='append',
+            help="Python package.module to import Python-based configuration from. "\
+                 "See deatailed package documentation (README.md) for how "\
+                 "to create and registered the required components. This should "\
+                 "be the full package.module name.")
     # source
     parser.add_argument('source',
             help="Valid CSV source.  This should be a path to a CSV file, or a "\
@@ -83,7 +91,10 @@ class cache(object):
         packages = args.package
         if not packages:
             packages = []
-        Configure([import_module(name) for name in packages]) # <-- set up ZCA
+        Configure([import_module(name) for name in packages]) # <-- set up ZCA with ZCML
+        if args.module:
+            for package_module in args.module:
+                import_module(package_module) # <-- Python-based ZCA configuration
         self.connectDb()
         self.validateSources()
 
