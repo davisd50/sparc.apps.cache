@@ -1,7 +1,0 @@
-sparc.apps.cache
-==========
-
-0.0.1
-++++++++++++++++++
-
-* initial release

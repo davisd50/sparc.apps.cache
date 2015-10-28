@@ -5,7 +5,7 @@ version = '0.0.1'
 
 setup(name='sparc.apps.cache',
       version=version,
-      description="",
+      description="A generic CSV to SQL DB caching utility.",
       long_description=open("README.md").read() + "\n" +
                        open(os.path.join("docs", "HISTORY.txt")).read(),
       # Get more strings from
@@ -18,11 +18,12 @@ setup(name='sparc.apps.cache',
         "Programming Language :: Python :: 2",
         'Programming Language :: Python :: 2.7',
       ],
-      keywords='',
-      author='',
-      author_email='',
-      url='http://github.com/davisd50/sparc.apps.cache',
-      license='GPL',
+      keywords=['zca'],
+      author='David Davis',
+      author_email='davisd50@gmail.com',
+      url='https://github.com/davisd50/sparc.apps.cache',
+      download_url = '',
+      license='MIT',
       packages=find_packages(exclude=['ez_setup']),
       namespace_packages=['sparc', 'sparc.apps'],
       include_package_data=True,
@@ -34,8 +35,10 @@ setup(name='sparc.apps.cache',
           'setuptools',
           'argparse',
           'pyinstaller',
+          'SQLAlchemy',
           'sparc.common',
-          'sparc.db'
+          'sparc.db',
+          'sparc.cache'
           # -*- Extra requirements: -*-
       ],
       entry_points={
