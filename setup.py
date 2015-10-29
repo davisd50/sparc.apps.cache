@@ -1,13 +1,13 @@
 from setuptools import setup, find_packages
 import os
 
-version = '0.0.1'
+version = '0.0.5'
 
 setup(name='sparc.apps.cache',
       version=version,
       description="A generic CSV to SQL DB caching utility.",
       long_description=open("README.md").read() + "\n" +
-                       open(os.path.join("docs", "HISTORY.txt")).read(),
+                       open("HISTORY.txt").read(),
       # Get more strings from
       # http://pypi.python.org/pypi?:action=list_classifiers
       classifiers=[

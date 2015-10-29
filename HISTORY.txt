@@ -5,3 +5,8 @@ Changelog
 ++++++++++++++++++
 
 * initial release
+
+0.0.4
+++++++++++++++++++
+
+* packaging update
