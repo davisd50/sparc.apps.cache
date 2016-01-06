@@ -5,14 +5,14 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from zope.interface import alsoProvides
-from zope.component import createObject, getMultiAdapter, getFactoriesFor, subscribers
+from zope.component import createObject, getUtility, getMultiAdapter, getFactoriesFor, subscribers
 
 from sparc.cache.interfaces import ICachableItem, ICachedItemMapper, ICacheArea, ICachedItem
 from sparc.cache.sql import ICachedItemMapperSqlCompatible
-from sparc.db import ISqlAlchemySession
+from sparc.db.sql.sa import ISqlAlchemySession
+from sparc.db.sql.sa import ISqlAlchemyDeclarativeBase
 
 from sparc.apps.cache.configure import Configure
-from sparc.db import Base
 
 import log
 import sparc.common.log
@@ -179,7 +179,7 @@ class cache(object):
         _total = 0
         for map, csvsource in self._import:
             sqlObjectCacheArea = getMultiAdapter((self.session, map), ICacheArea)
-            sqlObjectCacheArea.initialize(Base)
+            sqlObjectCacheArea.initialize(getUtility(ISqlAlchemyDeclarativeBase))
             c = sqlObjectCacheArea.import_source(csvsource)
             _total += c
             logger.debug("Updated %s cache entries from CSV source file: %s", str(c), str(csvsource.source))

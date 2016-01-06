@@ -126,8 +126,10 @@ that are specific to the implementation at hand.
 
     mypackage.mymodule
     >>> from sparc.cache.item import cachedItemMixin
-    >>> from sparc.db import Base
-    >>> from sparc.db.sql import sparcBaseMixin
+    >>> from zope.component import getUtility
+    >>> from sparc.db.sql.sa import ISqlAlchemyDeclarativeBase
+    >>> from sparc.db.sql.sa import sparcBaseMixin
+    >>> Base = getUtility(ISqlAlchemyDeclarativeBase)
     >>> class myCachedItem(cachedItemMixin, sparcBaseMixin, Base):
     >>>     _key = 'id'
     >>>     id = sqlalchemy.Column(sqlalchemy.VARCHAR(), primary_key=True)
