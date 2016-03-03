@@ -1,196 +1,197 @@
+import argparse
 from importlib import import_module
-import argparse, sys, os
-
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
+import sys
+import time
+import threading
+from xml.etree import ElementTree
+from zope.component import createObject
+from zope.component import getGlobalSiteManager
+from zope.component import getUtility
+import zope.component.event #needed in order to initialize the notification environment
+import zope.configuration.xmlconfig
 from zope.interface import alsoProvides
-from zope.component import createObject, getUtility, getMultiAdapter, getFactoriesFor, subscribers
 
-from sparc.cache.interfaces import ICachableItem, ICachedItemMapper, ICacheArea, ICachedItem
-from sparc.cache.sql import ICachedItemMapperSqlCompatible
-from sparc.db.sql.sa import ISqlAlchemySession
-from sparc.db.sql.sa import ISqlAlchemyDeclarativeBase
+from sparc.cache import ITransactionalCacheArea
+from sparc.configuration.zcml import Configure
+from sparc.configuration.xml import IAppElementTreeConfig
+import sparc.configuration
+import sparc.cache
 
-from sparc.apps.cache.configure import Configure
+import sparc.apps.cache
 
-import log
 import sparc.common.log
 import logging
-logger = logging.getLogger('sparc.apps.cache')
+logger = logging.getLogger(__name__)
+
+DESCRIPTION="""\
+Configurable information collector and processor.  Hookable system that allows
+runtime configuration of data pollers and cache areas.  In the most simple
+sense, this will collect cachable information from the configured sources
+and store that informaton into the configured cache areas.  Please see
+README for detailed information on how to configure and run this system. 
+"""
 
 def getScriptArgumentParser(args=sys.argv):
     """Return ArgumentParser object
-
+    
     Kwargs:
         args (list):        list of arguments that will be parsed.  The default
                             is the sys.argv list, and should be correct for most
                             use cases.
-        components (list)
-
+        components (list)   
+    
     Returns:
         ArgumentParser object that can be used to validate and execute the
         current script invocation.
     """
     # Description
     parser = argparse.ArgumentParser(
-            description='CSV information cache update script.  This will '\
-                        'import CSV data into a database.  If the database is '\
-                        'already populated, then only new entries and updates '\
-                        'will be imported.  Please reference Pypi package '\
-                        'documentation for detailed usage information.',
-            epilog="This script will exit with a non-zero status on failure, otherwise zero."+os.linesep+\
-                        "Windows invocation: cache.exe C:\\my\\csv\\dir sqlite:///C:\\tmp\\cache.db"+os.linesep+\
-                        "Unix invocation   : cache /path/to/my/csv sqlite:////tmp/cache.db")
-    # configuration
-    parser.add_argument('--package',
-            action='append',
-            help="Python package to configure for processing.  There should be "\
-                 "a valid configure.zcml file within the package that configures "\
-                 "the required caching factories and mapping subscribers.  This"\
-                 "option can be issued multiple times.")
-    # configuration
-    parser.add_argument('--module',
-            action='append',
-            help="Python package.module to import Python-based configuration from. "\
-                 "See deatailed package documentation (README.md) for how "\
-                 "to create and registered the required components. This should "\
-                 "be the full package.module name.")
+            description=DESCRIPTION)
     # source
-    parser.add_argument('source',
-            help="Valid CSV source.  This should be a path to a CSV file, or a "\
-                 "directory that contains CSV files.  CSV data sources that are "\
-                 "found to have a matching registered "\
-                 "sparc.cache.interfaces.ICachedItemMapper interface will import "\
-                 "updates to SQL cache area identified by db_url")
-    # db_url
-    parser.add_argument('db_url',
-            help="Valid database url to use for connection  (see "\
-                 "http://docs.sqlalchemy.org/en/rel_0_7/core/engines.html) for "\
-                 "detailed specifications for url.  Short-hand definition is "\
-                 "dialect+driver://user:password@host/dbname[?key=value..].")
-
+    parser.add_argument('config_file',
+            help="Valid script configration file.  This should be the path to "\
+                 "the script XML configuration file.  See config_sample.xml"\
+                 "for detailed config specifications.")
+    
     # --verbose
     parser.add_argument('--verbose',
             action='store_true',
             help="Echo verbose messages to stdout.")
-
+    
     # --verbose
     parser.add_argument('--debug',
             action='store_true',
             help="Echo debug messages to stdout.")
-
+    
     return parser
 
 class cache(object):
+
     def __init__(self, args):
-        self.args = args
-        self._source_files = list()
-        self._source_map_info = list() # list of tuples (source, factory, map)
-        self.setLoggers()
-        packages = args.package
-        if not packages:
-            packages = []
-        Configure([import_module(name) for name in packages]) # <-- set up ZCA with ZCML
-        if args.module:
-            for package_module in args.module:
-                import_module(package_module) # <-- Python-based ZCA configuration
-        self.connectDb()
-        self.validateSources()
+        self.setLoggers(args)
+        self._configure_zca(args.config_file)
 
-    def setLoggers(self):
+    def config_get_all_sources_with_polls(self):
+        """Return all source configs as {factory_name, poll}.
+        """
+        config = getUtility(IAppElementTreeConfig)
+        sources = {}
+        for cs_xml in config.findall('cacheablesource'):
+            sources[cs_xml.attrib['factory']] = \
+                 abs(int(cs_xml.attrib['poll'])) \
+                    if 'poll' in cs_xml.attrib else 0
+        return sources
+
+    def create_polled_sources_for_cache(self, factory_name):
+        """Return dictionary {ICacheableSource:poll} of sources and polls for
+        cachearea with factory_name
+        """
+        config = getUtility(IAppElementTreeConfig)
+        cachearea_xml = config.find(
+                    ".//cachearea[@factory='{}']".format(factory_name) )
+        
+        polled_sources = {}
+        for sf_name, poll in self.config_get_all_sources_with_polls().iteritems():
+            if 'sources' not in cachearea_xml.attrib or \
+                                not cachearea_xml.attrib['sources'].split():
+                polled_sources[createObject(sf_name)] = poll
+            elif sf_name in cachearea_xml.attrib['sources'].split():
+                polled_sources[createObject(sf_name)] = poll
+        return polled_sources        
+    
+    def create_pollers(self):
+        """Return configured pollers as a Python dictionary
+        
+        pollers: {ICacheArea:{ICacheableSource:poll}} <-- unique thread created based on Area + Source
+        """
+        pollers = {}
+        config = getUtility(IAppElementTreeConfig)
+        for cachearea_xml in config.findall('cachearea'):
+            pollers[createObject(cachearea_xml.attrib['factory'])] = \
+                self.create_polled_sources_for_cache(
+                                            cachearea_xml.attrib['factory'])
+        
+        return pollers
+
+    def setLoggers(self, args):
         self._loggers = {
-                         'sparc.cache.sql': logging.getLogger('sparc.cache.sql'),
-                         'sparc.cache.item': logging.getLogger('sparc.cache.item'),
-                         'sparc.cache.sources.normalized_datetime': logging.getLogger('sparc.cache.sources.normalized_datetime'),
-                         'sparc.common.configure': logging.getLogger('sparc.common.configure')
-                         }
+            'sparc.apps.cache': logging.getLogger('sparc.apps.cache'),
+            'sparc.cache.sql': logging.getLogger('sparc.cache.sql'),
+            'sparc.cache.item': logging.getLogger('sparc.cache.item'),
+            'sparc.cache.sources.normalize': 
+                            logging.getLogger('sparc.cache.sources.normalize'),
+            'sparc.common.configure': 
+                            logging.getLogger('sparc.common.configure')
+            }
         for name, logger in self._loggers.items():
-            if self.args.verbose:
+            if args.verbose:
                 logger.setLevel('INFO')
-            if self.args.debug:
+            if args.debug:
                 logger.setLevel('DEBUG')
-
-    def connectDb(self):
-        engine = create_engine(self.args.db_url)
-        Session = sessionmaker(bind=engine)
-        self.session = Session()
-        alsoProvides(self.session, ISqlAlchemySession) # this will make sure the multi-adapter lookup will function
-
-    def _findItemFactories(self):
-        _cachableItemFactories = list()
-        for name, factory in getFactoriesFor(ICachableItem):
-            _cachableItemFactories.append((name, factory),)
-        if not _cachableItemFactories:
-            logger.error("Unable to find any registered ZCA utility factories "\
-                        "that generate objects that implement "\
-                        "sparc.cache.interfaces.ICachableItem.  Unable to cache "\
-                        "any of the sources.")
-        return _cachableItemFactories
-
-    def validateSources(self):
+    
+    def _configure_zca(self, cache_config):
+        """We need a 3 step process to make sure dependencies are met
+        1. load static package-based ZCML files....standard stuff here.
+        2. Register the config into the registry (i.e. make it available for
+           lookup)
+        3. Manually register zcml entries in the config (these entries 
+           may be dependent on having the config available for lookup)
         """
-         - loop through all potential source files
-           - find CSV sources via cache.sources.CSVSourceFactory (valid sources return entries on first() calls)
-             - find an appropriate mapper, loop all mappers (need to relate mapper to CSVsource)
-        """
-        self._source_files = list()
-        self._import = list()
+        # step 1
+        packages = [sparc.configuration, sparc.cache, sparc.apps.cache] #required
+        Configure(packages)
+        #step 2
+        config = ElementTree.parse(cache_config).getroot()
+        alsoProvides(config, IAppElementTreeConfig)
+        gsm = getGlobalSiteManager()
+        gsm.registerUtility(config, IAppElementTreeConfig)
+        #step3
+        for zcml in config.findall('zcml'):
+            zcml_file, package = 'configure.zcml' \
+                        if 'file' not in zcml.attrib else zcml.attrib['file'],\
+                            import_module(zcml.attrib['package'])
+            zope.configuration.xmlconfig.XMLConfig(zcml_file, package)()
 
-        if os.path.isfile(self.args.source):
-            self._source_files.append(self.args.source)
-        else:
-            self._source_files = [os.path.join(self.args.source, f) for f in os.listdir(self.args.source) if os.path.isfile(os.path.join(self.args.source, f))]
-
-        for source in self._source_files:
-            logger.debug("found file, attempting to validate and process: %s", str(source))
-            if '\0' in open(source,'rb').read(1024 * 10): # read 10MB and look for NUL byte
-                logger.debug("file contains NUL byte, skip parsing: %s", str(source))
-                continue
-            _validated_file = False
+    def poll(self, area, source, delta, exit_ = None):
+        while True:
             try:
-                for fname, factory in self._findItemFactories():
-                    csvsource = createObject('cache.sources.CSVSourceFactory', source, factory)
-                    item = csvsource.first()
-                    if not item:
-                        logger.debug("Item factory test failed for %s", str(fname))
-                        continue
-                    logger.info("found potential CSV item source file, now will try to find a matching mapper: %s", str(source))
-
-                    for sfacName, sFactory in getFactoriesFor(ICachedItem):
-                        for mapper in subscribers((csvsource,sFactory,), ICachedItemMapper):
-                            logger.debug("testing mapper/cachedItem combination: %s, %s", str(mapper), str(sfacName))
-                            if not ICachedItemMapperSqlCompatible.providedBy(mapper): # filter out non-SQL-based mappers
-                                logger.debug("skipping ICachedItemMapper %s because it does not also provide required interface ICachedItemMapperSqlCompatible", str(mapper))
-                                continue
-                            if not mapper.check(item):
-                                logger.info("skipping CachedItemMapper %s because item failed mapper validation check", str(mapper))
-                                continue
-                            _validated_file = True
-                            logger.info("found valid ICachedItemMapper %s", str(mapper))
-                            self._import.append((mapper, csvsource))
-                            raise StopIteration
-            except StopIteration:
-                pass
-            if not _validated_file:
-                logger.warn("unable to find valid CSV entries in source: %s", str(source))
-
-    def go(self):
-        _total = 0
-        for map, csvsource in self._import:
-            sqlObjectCacheArea = getMultiAdapter((self.session, map), ICacheArea)
-            sqlObjectCacheArea.initialize(getUtility(ISqlAlchemyDeclarativeBase))
-            c = sqlObjectCacheArea.import_source(csvsource)
-            _total += c
-            logger.debug("Updated %s cache entries from CSV source file: %s", str(c), str(csvsource.source))
-        self.session.commit()
-        logger.info("Updated %s cache entries from CSV source file(s): %s", str(_total), str(self.args.source))
-        return _total
+                area.import_source(source)
+                if ITransactionalCacheArea.providedBy(area):
+                    area.commit()
+                #notify(CheckAlertQueueEvent(self.zodb)) # process queue within thread
+                #self.flush_alert_queue()
+                #transaction.commit()
+            except Exception as e:
+                if ITransactionalCacheArea.providedBy(area):
+                    area.rollback()
+                logger.warning(str(e))
+            if not delta:
+                return
+            for i in xrange(delta):
+                if exit_.is_set():
+                    return
+                time.sleep(1)
+    
+    def go(self, pollers):
+        """Create threaded pollers and start configured polling cycles
+        """
+        try:
+            exit_ = threading.Event()
+            for area, poller in pollers.iteritems(): # {ICacheArea:{ICacheableSource:poll}}
+                for source, poll in poller.iteritems():
+                    threading.Thread(target=self.poll, 
+                                        args=(area, source, poll,exit_), 
+                                    ).start()
+            while threading.active_count() > 1:
+                time.sleep(.001)
+        except KeyboardInterrupt:
+            exit_.set()
+    
 
 def main():
     args = getScriptArgumentParser().parse_args()
-    rows = cache(args).go()
-    print 'Successfully updated %s rows in the cache'%(rows)
+    r = cache(args)
+    r.go(r.create_pollers())
 
 if __name__ == '__main__':
     main()

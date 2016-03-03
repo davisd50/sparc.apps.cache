@@ -5,7 +5,7 @@ version = '0.0.5'
 
 setup(name='sparc.apps.cache',
       version=version,
-      description="A generic CSV to SQL DB caching utility.",
+      description="Configurable information collector and processor",
       long_description=open("README.md").read() + "\n" +
                        open("HISTORY.txt").read(),
       # Get more strings from
@@ -35,13 +35,12 @@ setup(name='sparc.apps.cache',
           'setuptools',
           'argparse',
           'pyinstaller',
-          'SQLAlchemy',
-          'sparc.common',
-          'sparc.db',
+          'zope.event',
+          'sparc.configuration',
           'sparc.cache'
           # -*- Extra requirements: -*-
       ],
       entry_points={
-          'console_scripts':['cache=sparc.apps.cache.cache:main'],
+          'console_scripts':['cacher=sparc.apps.cache.cache:main'],
           },
       )

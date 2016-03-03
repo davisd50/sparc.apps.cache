@@ -1,0 +1,32 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:i18n="http://namespaces.zope.org/i18n"
+    i18n_domain="sparc.apps.cache">
+
+    <utility
+        component='.cachableSource1Factory'
+        name='CachableSource1'
+        />
+    <utility
+        component='.cachableSource2Factory'
+        name='CachableSource2'
+        />
+    <utility
+        component='.cachableSource3Factory'
+        name='CachableSource3'
+        />
+
+    <utility
+        component='.cacheArea1Factory'
+        name='CacheArea1'
+        />
+    <utility
+        component='.cacheArea2Factory'
+        name='CacheArea2'
+        />
+    <utility
+        component='.cacheArea3Factory'
+        name='CacheArea3'
+        />
+
+</configure>
