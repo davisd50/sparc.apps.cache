@@ -19,7 +19,8 @@ import sparc.configuration
 import sparc.cache
 
 import sparc.apps.cache
-from sparc.apps.cache.events import CacheAreaPollersAboutToStartEvent
+from events import CacheAreaPollersAboutToStartEvent
+from events import CompletedCachableSourcePoll
 
 import sparc.common.log
 import logging
@@ -160,9 +161,7 @@ class cache(object):
                 area.import_source(source)
                 if ITransactionalCacheArea.providedBy(area):
                     area.commit()
-                #notify(CheckAlertQueueEvent(self.zodb)) # process queue within thread
-                #self.flush_alert_queue()
-                #transaction.commit()
+                notify(CompletedCachableSourcePoll(source))
             except Exception as e:
                 if ITransactionalCacheArea.providedBy(area):
                     area.rollback()

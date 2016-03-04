@@ -67,7 +67,9 @@ True
 3
 
 Test the application poller
+>>> from zope.component.eventtesting import setUp
 >>> from zope.component import createObject
+>>> setUp() # capture events for testing
 >>> area = createObject(u'CacheArea1')
 >>> area.count
 0
@@ -76,6 +78,15 @@ Test the application poller
 >>> cache.poll(area, source, delta)
 >>> area.count
 1
+
+The poller should have dispatched an event
+>>> from zope.component.eventtesting import getEvents
+>>> from sparc.apps.cache import ICompletedCachableSourcePoll
+>>> events = getEvents(ICompletedCachableSourcePoll)
+>>> len(events) > 0
+True
+>>> ICompletedCachableSourcePoll.providedBy(events[0])
+True
 
 Test the application threader
 >>> import threading, time

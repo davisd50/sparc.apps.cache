@@ -7,3 +7,4 @@ def Configure():
 
 from interfaces import ICacheAreaPollers
 from interfaces import ICacheAreaPollersAboutToStartEvent
+from interfaces import ICompletedCachableSourcePoll
