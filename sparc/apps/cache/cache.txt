@@ -52,10 +52,13 @@ Create some polled source data structures and verify their contents
 0
 
 Create and test the pollers data structure
+>>> from sparc.apps.cache import ICacheAreaPollers
 >>> pollers = cache.create_pollers()
 >>> sorted_keys = sorted(pollers.keys(), key=lambda ca:type(ca))
 >>> type(sorted_keys[0]), type(sorted_keys[1]), type(sorted_keys[2])
 (<class 'sparc.apps.cache.tests.CacheArea1'>, <class 'sparc.apps.cache.tests.CacheArea2'>, <class 'sparc.apps.cache.tests.CacheArea3'>)
+>>> ICacheAreaPollers.providedBy(pollers)
+True
 >>> len(pollers[sorted_keys[0]])
 1
 >>> len(pollers[sorted_keys[1]])

@@ -7,8 +7,9 @@ from xml.etree import ElementTree
 from zope.component import createObject
 from zope.component import getGlobalSiteManager
 from zope.component import getUtility
-import zope.component.event #needed in order to initialize the notification environment
+import zope.component.event #needed in order to initialize the event notification environment
 import zope.configuration.xmlconfig
+from zope.event import notify
 from zope.interface import alsoProvides
 
 from sparc.cache import ITransactionalCacheArea
@@ -18,6 +19,7 @@ import sparc.configuration
 import sparc.cache
 
 import sparc.apps.cache
+from sparc.apps.cache.events import CacheAreaPollersAboutToStartEvent
 
 import sparc.common.log
 import logging
@@ -104,7 +106,7 @@ class cache(object):
         
         pollers: {ICacheArea:{ICacheableSource:poll}} <-- unique thread created based on Area + Source
         """
-        pollers = {}
+        pollers = createObject(u'sparc.apps.cache.pollers')
         config = getUtility(IAppElementTreeConfig)
         for cachearea_xml in config.findall('cachearea'):
             pollers[createObject(cachearea_xml.attrib['factory'])] = \
@@ -176,6 +178,7 @@ class cache(object):
         """Create threaded pollers and start configured polling cycles
         """
         try:
+            notify(CacheAreaPollersAboutToStartEvent(pollers))
             exit_ = threading.Event()
             for area, poller in pollers.iteritems(): # {ICacheArea:{ICacheableSource:poll}}
                 for source, poll in poller.iteritems():
