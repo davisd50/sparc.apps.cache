@@ -5,7 +5,6 @@ for basic testing purposes only...don't model any real-world implementations
 on these mock-ups.
 """
 
-from zope.component import getGlobalSiteManager
 from zope.component.factory import Factory
 from zope.component.interfaces import IFactory
 from zope.interface import implements

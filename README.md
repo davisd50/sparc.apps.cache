@@ -176,13 +176,13 @@ leverage the custom components created above.  We'll need to register our
 ICachedItemMapper implementation.
 
     mypackage.mymodule
-    >>> from zope.component import getGlobalSiteManager
+    >>> from zope.component import getSiteManager
     >>> from zope.component.interfaces import IFactory
     >>> from sparc.cache import ICachedItemMapper, ICachableSource
-    >>> gsm = getGlobalSiteManager()
-    >>> gsm.registerUtility(mypackage.mymodule.myCachableItemFactory, IFactory, u'mypackage.mymodule.myCachableItemFactory')
-    >>> gsm.registerUtility(mypackage.mymodule.myCachedItemFactory, IFactory, u'mypackage.mymodule.myCachedItemFactory')
-    >>> gsm.registerSubscriptionAdapter(myItemCacheMapper, (ICachableSource, IFactory,), ICachedItemMapper)
+    >>> sm = getSiteManager()
+    >>> sm.registerUtility(mypackage.mymodule.myCachableItemFactory, IFactory, u'mypackage.mymodule.myCachableItemFactory')
+    >>> sm.registerUtility(mypackage.mymodule.myCachedItemFactory, IFactory, u'mypackage.mymodule.myCachedItemFactory')
+    >>> sm.registerSubscriptionAdapter(myItemCacheMapper, (ICachableSource, IFactory,), ICachedItemMapper)
 
 Components may also be registered via ZCML in combination with the --package
 launch parameter.  In this case, you would need to have a properly formated
