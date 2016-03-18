@@ -5,7 +5,7 @@ import time
 import threading
 from xml.etree import ElementTree
 from zope.component import createObject
-from zope.component import getGlobalSiteManager
+from zope.component import getSiteManager
 from zope.component import getUtility
 import zope.component.event #needed in order to initialize the event notification environment
 import zope.configuration.xmlconfig
@@ -146,8 +146,8 @@ class cache(object):
         #step 2
         config = ElementTree.parse(cache_config).getroot()
         alsoProvides(config, IAppElementTreeConfig)
-        gsm = getGlobalSiteManager()
-        gsm.registerUtility(config, IAppElementTreeConfig)
+        sm = getSiteManager()
+        sm.registerUtility(config, IAppElementTreeConfig)
         #step3
         for zcml in config.findall('zcml'):
             zcml_file, package = 'configure.zcml' \
