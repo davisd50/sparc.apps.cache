@@ -40,6 +40,9 @@ setup(name='sparc.apps.cache',
           'sparc.cache'
           # -*- Extra requirements: -*-
       ],
+      tests_require=[
+          'sparc.testing'
+      ],
       entry_points={
           'console_scripts':['cacher=sparc.apps.cache.cache:main'],
           },
