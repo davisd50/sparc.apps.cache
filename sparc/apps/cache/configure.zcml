@@ -3,6 +3,10 @@
     xmlns:i18n="http://namespaces.zope.org/i18n"
     i18n_domain="sparc.apps.cache" >
 
+    <include package="zope.component" />
+    <include package="sparc.cache" />
+    <include package="sparc.configuration" />
+
     <utility
         component='.pollers.cacheAreaPollersFactory'
         name='sparc.apps.cache.pollers'

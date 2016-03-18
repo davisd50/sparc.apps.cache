@@ -141,7 +141,7 @@ class cache(object):
            may be dependent on having the config available for lookup)
         """
         # step 1
-        packages = [sparc.configuration, sparc.cache, sparc.apps.cache] #required
+        packages = [sparc.apps.cache]
         Configure(packages)
         #step 2
         config = ElementTree.parse(cache_config).getroot()
