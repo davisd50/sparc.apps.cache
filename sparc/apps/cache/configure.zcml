@@ -4,8 +4,19 @@
     i18n_domain="sparc.apps.cache" >
 
     <include package="zope.component" />
+    <include package="zope.security" />
+    <include package="zope.annotation" />
+    
+    <include package="sparc.asset" />
+    <include package="sparc.aws" />
     <include package="sparc.cache" />
+    <include package="sparc.common" />
     <include package="sparc.configuration" />
+    <include package="sparc.db" />
+    <include package="sparc.entity" />
+    <include package="sparc.event" />
+    <include package="sparc.publish" />
+    <include package="sparc.utils" />
 
     <utility
         component='.pollers.cacheAreaPollersFactory'
