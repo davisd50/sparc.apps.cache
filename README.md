@@ -162,12 +162,14 @@ a date string can take many different formats).
     >>> from sparc.cache.sql import SqlObjectMapperMixin
     >>> from sparc.cache.sources.normalized_datetime import normalizedDateTime
     >>> class myItemCacheMapper(SqlObjectMapperMixin):
-    >>>     mapper = {
-    >>>               'id'       :'id', 
-    >>>               'time'     : normalizedDateTime('time'),
-    >>>               'user_ip'  : 'user_ip',
-    >>>               'username' : 'username'
-    >>>               }
+    ...     implements(ICachedItemMapper)
+    ...     mapper = {
+    ...               'id'       :'id', 
+    ...               'time'     : normalizedDateTime('time'),
+    ...               'user_ip'  : 'user_ip',
+    ...               'username' : 'username'
+    ...               }
+    ...     _key = 'id'
     
 ###Python Requirement: Component registration
 Registration is what allows the caching application to lookup and
