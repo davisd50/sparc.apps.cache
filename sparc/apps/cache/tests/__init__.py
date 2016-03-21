@@ -26,6 +26,8 @@ cachableSource3Factory = Factory(CachableSource3)
 
 class CacheAreasMixin(object):
     count = 0
+    def __init__(self, *args, **kwargs):
+        pass
     def import_source(self, source):
         self.count += 1
     def commit(self):

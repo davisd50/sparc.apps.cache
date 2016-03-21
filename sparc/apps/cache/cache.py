@@ -110,7 +110,9 @@ class cache(object):
         pollers = createObject(u'sparc.apps.cache.pollers')
         config = getUtility(IAppElementTreeConfig)
         for cachearea_xml in config.findall('cachearea'):
-            pollers[createObject(cachearea_xml.attrib['factory'])] = \
+            pollers[createObject(cachearea_xml.attrib['factory'],
+                                 element=cachearea_xml
+                                 )] = \
                 self.create_polled_sources_for_cache(
                                             cachearea_xml.attrib['factory'])
         
