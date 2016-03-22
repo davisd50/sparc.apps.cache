@@ -22,8 +22,7 @@ import sparc.apps.cache
 from events import CacheAreaPollersAboutToStartEvent
 from events import CompletedCachableSourcePoll
 
-import sparc.common.log
-import logging
+from sparc.logging import logging
 logger = logging.getLogger(__name__)
 
 DESCRIPTION="""\
@@ -73,16 +72,18 @@ class cache(object):
     def __init__(self, args):
         self.setLoggers(args)
         self._configure_zca(args.config_file)
+        logger.debug("Component registry initialized")
 
     def config_get_all_sources_with_polls(self):
-        """Return all source configs as {factory_name, poll}.
+        """Return all source configs as [(factory_name, poll, element)].
         """
         config = getUtility(IAppElementTreeConfig)
-        sources = {}
-        for cs_xml in config.findall('cacheablesource'):
-            sources[cs_xml.attrib['factory']] = \
-                 abs(int(cs_xml.attrib['poll'])) \
-                    if 'poll' in cs_xml.attrib else 0
+        sources = []
+        for cs_element in config.findall('cacheablesource'):
+            _factory_name = cs_element.attrib['factory']
+            _poll = abs(int(cs_element.attrib['poll'] if \
+                                        'poll' in cs_element.attrib else 0))
+            sources.append((_factory_name, _poll, cs_element,))
         return sources
 
     def create_polled_sources_for_cache(self, factory_name):
@@ -94,12 +95,20 @@ class cache(object):
                     ".//cachearea[@factory='{}']".format(factory_name) )
         
         polled_sources = {}
-        for sf_name, poll in self.config_get_all_sources_with_polls().iteritems():
+        for sf_name, poll, cs_element in \
+                        self.config_get_all_sources_with_polls():
             if 'sources' not in cachearea_xml.attrib or \
                                 not cachearea_xml.attrib['sources'].split():
-                polled_sources[createObject(sf_name)] = poll
+                #import pdb;pdb.set_trace()
+                polled_sources[createObject(sf_name, cs_element)] = poll
             elif sf_name in cachearea_xml.attrib['sources'].split():
-                polled_sources[createObject(sf_name)] = poll
+                polled_sources[createObject(sf_name, cs_element)] = poll
+            
+            logger.info('Configured polling source factory %s with poll ' +\
+                                        'time %d and for cachearea factory %s',
+                                            sf_name,
+                                            poll,
+                                            factory_name)
         return polled_sources        
     
     def create_pollers(self):
@@ -119,6 +128,7 @@ class cache(object):
         return pollers
 
     def setLoggers(self, args):
+        """
         self._loggers = {
             'sparc.apps.cache': logging.getLogger('sparc.apps.cache'),
             'sparc.cache.sql': logging.getLogger('sparc.cache.sql'),
@@ -133,6 +143,12 @@ class cache(object):
                 logger.setLevel('INFO')
             if args.debug:
                 logger.setLevel('DEBUG')
+        """
+        if args.verbose:
+            logger.setLevel('INFO')
+        if args.debug:
+            logger.setLevel('DEBUG')
+        
     
     def _configure_zca(self, cache_config):
         """We need a 3 step process to make sure dependencies are met
