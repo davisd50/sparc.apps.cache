@@ -127,22 +127,7 @@ class cache(object):
         return pollers
 
     def setLoggers(self, args):
-        """
-        self._loggers = {
-            'sparc.apps.cache': logging.getLogger('sparc.apps.cache'),
-            'sparc.cache.sql': logging.getLogger('sparc.cache.sql'),
-            'sparc.cache.item': logging.getLogger('sparc.cache.item'),
-            'sparc.cache.sources.normalize': 
-                            logging.getLogger('sparc.cache.sources.normalize'),
-            'sparc.common.configure': 
-                            logging.getLogger('sparc.common.configure')
-            }
-        for name, logger in self._loggers.items():
-            if args.verbose:
-                logger.setLevel('INFO')
-            if args.debug:
-                logger.setLevel('DEBUG')
-        """
+        logger = logging.getLogger() # root logger
         if args.verbose:
             logger.setLevel('INFO')
         if args.debug:
@@ -183,7 +168,6 @@ class cache(object):
             except Exception as e:
                 if ITransactionalCacheArea.providedBy(area):
                     area.rollback()
-                #logger.warning(str(e))
                 logger.exception("Error importing cachable items into cache area")
             if not delta:
                 return
@@ -207,6 +191,7 @@ class cache(object):
             while threading.active_count() > 1:
                 time.sleep(.001)
         except KeyboardInterrupt:
+            logger.info("Exiting application.")
             exit_.set()
     
 
