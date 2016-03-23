@@ -19,9 +19,13 @@ We can now initialize a cache application
 
 Get all configured sources and their related polls
 >>> sources = cache.config_get_all_sources_with_polls()
->>> sources['CachableSource1']
+>>> sources[0][0]
+'CachableSource1'
+>>> sources[0][1]
 1
->>> sources['CachableSource3']
+>>> sources[2][0]
+'CachableSource3'
+>>> sources[2][1]
 0
 
 Create some polled source data structures and verify their contents

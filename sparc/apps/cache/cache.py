@@ -99,7 +99,6 @@ class cache(object):
                         self.config_get_all_sources_with_polls():
             if 'sources' not in cachearea_xml.attrib or \
                                 not cachearea_xml.attrib['sources'].split():
-                #import pdb;pdb.set_trace()
                 polled_sources[createObject(sf_name, cs_element)] = poll
             elif sf_name in cachearea_xml.attrib['sources'].split():
                 polled_sources[createObject(sf_name, cs_element)] = poll
@@ -176,14 +175,16 @@ class cache(object):
     def poll(self, area, source, delta, exit_ = None):
         while True:
             try:
-                area.import_source(source)
+                new = area.import_source(source)
                 if ITransactionalCacheArea.providedBy(area):
                     area.commit()
+                logger.info("Found %d new items in cachable source", new)
                 notify(CompletedCachableSourcePoll(source))
             except Exception as e:
                 if ITransactionalCacheArea.providedBy(area):
                     area.rollback()
-                logger.warning(str(e))
+                #logger.warning(str(e))
+                logger.exception("Error importing cachable items into cache area")
             if not delta:
                 return
             for i in xrange(delta):
@@ -196,6 +197,7 @@ class cache(object):
         """
         try:
             notify(CacheAreaPollersAboutToStartEvent(pollers))
+            logger.info("Starting pollers")
             exit_ = threading.Event()
             for area, poller in pollers.iteritems(): # {ICacheArea:{ICacheableSource:poll}}
                 for source, poll in poller.iteritems():

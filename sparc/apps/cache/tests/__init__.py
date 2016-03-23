@@ -12,15 +12,19 @@ from sparc.cache import ICachableItem
 from sparc.cache import ICachableSource
 from sparc.cache import ICacheArea
 
-class CachableSource1(object):
+class CachableSourceMixin(object):
+    def __init__(self, *args, **kwargs):
+        pass
+
+class CachableSource1(CachableSourceMixin):
     implements(ICachableSource)
 cachableSource1Factory = Factory(CachableSource1)
 
-class CachableSource2(object):
+class CachableSource2(CachableSourceMixin):
     implements(ICachableSource)
 cachableSource2Factory = Factory(CachableSource2)
 
-class CachableSource3(object):
+class CachableSource3(CachableSourceMixin):
     implements(ICachableSource)
 cachableSource3Factory = Factory(CachableSource3)
 
