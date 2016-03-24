@@ -132,7 +132,6 @@ class cache(object):
             logger.setLevel('INFO')
         if args.debug:
             logger.setLevel('DEBUG')
-        
     
     def _configure_zca(self, cache_config):
         """We need a 3 step process to make sure dependencies are met
