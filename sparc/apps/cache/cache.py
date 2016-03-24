@@ -184,6 +184,7 @@ class cache(object):
             logger.info("Starting pollers")
             exit_ = threading.Event()
             for area, poller in pollers.iteritems(): # {ICacheArea:{ICacheableSource:poll}}
+                area.initialize()
                 for source, poll in poller.iteritems():
                     threading.Thread(target=self.poll, 
                                         args=(area, source, poll,exit_), 
