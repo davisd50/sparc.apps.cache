@@ -72,7 +72,7 @@ class cache(object):
     def __init__(self, args):
         self.setLoggers(args)
         self._configure_zca(args.config_file)
-        logger.debug("Component registry initialized")
+        logger.debug("Component registry initialized, application configuration registered")
 
     def config_get_all_sources_with_polls(self):
         """Return all source configs as [(factory_name, poll, element)].
@@ -147,15 +147,15 @@ class cache(object):
         Configure(packages)
         #step 2
         config = ElementTree.parse(cache_config).getroot()
-        alsoProvides(config, IAppElementTreeConfig)
-        sm = getSiteManager()
-        sm.registerUtility(config, IAppElementTreeConfig)
-        #step3
         for zcml in config.findall('zcml'):
             zcml_file, package = 'configure.zcml' \
                         if 'file' not in zcml.attrib else zcml.attrib['file'],\
                             import_module(zcml.attrib['package'])
             zope.configuration.xmlconfig.XMLConfig(zcml_file, package)()
+        #step3
+        alsoProvides(config, IAppElementTreeConfig)
+        sm = getSiteManager()
+        sm.registerUtility(config, IAppElementTreeConfig)
 
     def poll(self, area, source, delta, exit_ = None):
         while True:
