@@ -171,11 +171,16 @@ class cache(object):
         area.initialize()
         while True:
             try:
-                new = area.import_source(source)
+                count = 0
+                for item in source.items():
+                    if area.cache(item):
+                        count += 1
+                    if kwargs['exit_'].is_set():
+                        break
                 if ITransactionalCacheArea.providedBy(area):
                     area.commit()
                 logger.info("Found %d new items in cachablesource %s" % \
-                                (new, kwargs['cacheablesource'].attrib['id']))
+                                (count, kwargs['cacheablesource'].attrib['id']))
                 notify(CompletedCachableSourcePoll(source))
             except Exception:
                 if ITransactionalCacheArea.providedBy(area):
@@ -205,7 +210,7 @@ class cache(object):
             while threading.active_count() > 1:
                 time.sleep(.001)
         except KeyboardInterrupt:
-            logger.info("Exiting application.")
+            logger.info("KeyboardInterrupt signal caught, shutting down pollers...")
             exit_.set()
     
 
