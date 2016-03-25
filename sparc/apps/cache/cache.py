@@ -14,6 +14,7 @@ from zope.interface import alsoProvides
 
 from sparc.cache import ITransactionalCacheArea
 from sparc.configuration.zcml import Configure
+from sparc.configuration.zcml.configure import configure_vocabulary_registry
 from sparc.configuration.xml import IAppElementTreeConfig
 import sparc.configuration
 import sparc.cache
@@ -69,29 +70,24 @@ def getScriptArgumentParser(args=sys.argv):
 
 class cache(object):
 
-    def __init__(self, args):
-        self.setLoggers(args)
-        self.config = self._configure_zca(args.config_file)
-        logger.debug("Component registry initialized, application configuration registered")
-
-    def setLoggers(self, args):
-        logger = logging.getLogger() # root logger
-        if args.verbose:
-            logger.setLevel('INFO')
-        if args.debug:
-            logger.setLevel('DEBUG')
-
-    def _configure_zca(self, cache_config):
-        """We need a 3 step process to make sure dependencies are met
+    @classmethod
+    def configure_zca(cls, cache_config):
+        """Configure runtime Zope Component Architecture registry
+        
+        We need a 3 step process to make sure dependencies are met
         1. load static package-based ZCML files....standard stuff here.
         2. Register the config into the registry (i.e. make it available for
            lookup)
         3. Manually register zcml entries in the config (these entries 
            may be dependent on having the config available for lookup)
+           
+        Args:
+            cache_config: application configuration file name or file object
         """
         # step 1
         packages = [sparc.apps.cache]
         Configure(packages)
+        configure_vocabulary_registry()
         #step 2
         config = ElementTree.parse(cache_config).getroot()
         for zcml in config.findall('zcml'):
@@ -104,6 +100,18 @@ class cache(object):
         sm = getSiteManager()
         sm.registerUtility(config, IAppElementTreeConfig)
         return config
+
+    def __init__(self, args):
+        self.setLoggers(args)
+        self.config = self.configure_zca(args.config_file)
+        logger.debug("Component registry initialized, application configuration registered")
+
+    def setLoggers(self, args):
+        logger = logging.getLogger() # root logger
+        if args.verbose:
+            logger.setLevel('INFO')
+        if args.debug:
+            logger.setLevel('DEBUG')
     
     def poller_configurations(self):
         """Returns sequence of poller configurations
