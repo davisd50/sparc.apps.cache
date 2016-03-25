@@ -1,7 +1,7 @@
 from zope.component.factory import Factory
 from zope.interface import implements
-from interfaces import ICacheAreaPollers
+from interfaces import ICachableSourcePollerConfigurations
 
-class CacheAreaPollers(dict):
-    implements(ICacheAreaPollers)
-cacheAreaPollersFactory = Factory(CacheAreaPollers)
+class CachableSourcePollerConfigurations(list):
+    implements(ICachableSourcePollerConfigurations)
+cacheAreaPollersFactory = Factory(CachableSourcePollerConfigurations)

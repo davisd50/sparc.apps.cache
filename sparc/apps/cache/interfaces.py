@@ -1,15 +1,14 @@
 from zope.interface import Interface
 from zope.interface.interfaces import IObjectEvent
 
-class ICacheAreaPollersAboutToStartEvent(IObjectEvent):
-    """An ICacheAreaPollers is about to begin polling"""
+class ICachableSourcePollersAboutToStartEvent(IObjectEvent):
+    """An ICachableSourcePollerConfigurations is about to begin polling"""
 
 class ICompletedCachableSourcePoll(IObjectEvent):
     """An ICachableSource has been polled"""
 
-class ICacheAreaPollers(Interface):
-    """A dict based data structure for cache area pollers
+class ICachableSourcePollerConfigurations(Interface):
+    """A sequence based data structure for ICachableSource poller configurations
     
-    {ICacheArea:{ICacheableSource:poll_time_int}}
-    
+    [{'cachablesource': cachablesource_element, 'cachearea': cachearea_element}]
     """

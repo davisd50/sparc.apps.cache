@@ -1,27 +1,34 @@
 <?xml version="1.0"?>
 <configuration>
-    <cacheablesource 
-    	poll='1'
-    	factory='CachableSource1'
+    <cacheablesource
+    	id="1"
+    	poll="1"
+    	factory="CachableSource1"
     	/>
     <cacheablesource 
-    	poll='2'
-    	factory='CachableSource2'
+    	id="2"
+    	poll="2"
+    	factory="CachableSource2"
     	/>
     <cacheablesource 
-    	factory='CachableSource3'
+    	id="3"
+    	poll="0"
+    	factory="CachableSource3"
     	/>
 
     <cachearea
-    	factory='CacheArea1'
-    	sources='CachableSource1'
+    	id="a"
+    	factory="CacheArea1"
+    	sources="1"
     	/>
     <cachearea
-    	factory='CacheArea2'
-    	sources='CachableSource1 CachableSource2'
+    	id="b"
+    	factory="CacheArea2"
+    	sources="1 2"
     	/>
     <cachearea
-    	factory='CacheArea3'
+    	id="c"
+    	factory="CacheArea3"
     	/>
-    <zcml package='sparc.apps.cache.tests' />
+    <zcml package="sparc.apps.cache.tests" />
 </configuration>

@@ -34,6 +34,9 @@ class CacheAreasMixin(object):
         pass
     def import_source(self, source):
         self.count += 1
+        return 0
+    def initialize(self):
+        pass
     def commit(self):
         pass
     def rollback(self):
