@@ -34,6 +34,7 @@ class SparcCacheRuntimeLayer(ZCMLLayerBase):
         
     def tearDown(self):
         super(SparcCacheRuntimeLayer, self).tearDown()
+        
     def _load_zcml(self, context):
         pass # nothing to do
 
