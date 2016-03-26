@@ -10,3 +10,9 @@ Changelog
 ++++++++++++++++++
 
 * pypi packaging update
+
+0.5.0
+++++++++++++++++++
+
+* Threaded implementation
+* New configuration syntax

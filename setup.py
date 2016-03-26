@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '0.0.5'
+version = '0.5.0'
 
 setup(name='sparc.apps.cache',
       version=version,
@@ -32,12 +32,11 @@ setup(name='sparc.apps.cache',
         },
       zip_safe=False,
       install_requires=[
-          'setuptools',
           'argparse',
-          'pyinstaller',
+          'zope.component',
+          'zope.interface',
           'zope.event',
-          'sparc.configuration',
-          'sparc.cache'
+          'sparc'
           # -*- Extra requirements: -*-
       ],
       tests_require=[
