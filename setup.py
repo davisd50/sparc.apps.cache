@@ -32,11 +32,26 @@ setup(name='sparc.apps.cache',
         },
       zip_safe=False,
       install_requires=[
+          'setuptools',
           'argparse',
           'zope.component',
           'zope.interface',
           'zope.event',
-          'sparc'
+          'sparc.asset',
+          'sparc.aws',
+          'sparc.box',
+          'sparc.cache',
+          'sparc.common',
+          'sparc.configuration',
+          'sparc.db',
+          'sparc.entity',
+          'sparc.event',
+          'sparc.i18n',
+          'sparc.logging',
+          'sparc.login',
+          'sparc.publish',
+          'sparc.testing',
+          'sparc.utils'
           # -*- Extra requirements: -*-
       ],
       tests_require=[
