@@ -15,6 +15,8 @@ from sparc.cache import ICacheArea
 class CachableSourceMixin(object):
     def __init__(self, *args, **kwargs):
         pass
+    def items(self):
+        return []
 
 class CachableSource1(CachableSourceMixin):
     implements(ICachableSource)
