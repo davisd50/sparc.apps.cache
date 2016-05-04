@@ -58,6 +58,7 @@ setup(name='sparc.apps.cache',
           'sparc.testing'
       ],
       entry_points={
-          'console_scripts':['cacher=sparc.apps.cache.cache:main'],
+          'console_scripts':['cacher=sparc.apps.cache.cache:main',
+                             'cacher_test=sparc.apps.cache.testing.cache_test:main'],
           },
       )
