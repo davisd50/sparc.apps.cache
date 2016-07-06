@@ -12,6 +12,7 @@ import zope.configuration.xmlconfig
 from zope.event import notify
 from zope.interface import alsoProvides
 
+from sparc.cache import ITrimmableCacheArea
 from sparc.cache import ITransactionalCacheArea
 from sparc.configuration.zcml import Configure
 from sparc.configuration.zcml.configure import configure_vocabulary_registry
@@ -171,16 +172,22 @@ class cache(object):
         area.initialize()
         while True:
             try:
-                count = 0
-                for item in source.items():
-                    if area.cache(item):
-                        count += 1
-                    if kwargs['exit_'].is_set():
-                        break
+                count = trimmed = 0
+                if ITrimmableCacheArea.providedBy(area):
+                    count, trimmed = area.trim(source.items())
+                else:
+                    for item in list(source.items()):
+                        if area.cache(item):
+                            count += 1
+                        if kwargs['exit_'].is_set():
+                            break
                 if ITransactionalCacheArea.providedBy(area):
                     area.commit()
                 logger.info("Found %d new items in cachablesource %s" % \
                                 (count, kwargs['cacheablesource'].attrib['id']))
+                if trimmed:
+                    logger.info("Trimmed %d items in cachablesource %s" % \
+                                (trimmed, kwargs['cacheablesource'].attrib['id']))
                 notify(CompletedCachableSourcePoll(source))
             except Exception:
                 if ITransactionalCacheArea.providedBy(area):
