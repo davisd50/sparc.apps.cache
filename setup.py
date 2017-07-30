@@ -33,7 +33,6 @@ setup(name='sparc.apps.cache',
       zip_safe=False,
       install_requires=[
           'setuptools',
-          'argparse',
           'zope.component',
           'zope.interface',
           'zope.event',
